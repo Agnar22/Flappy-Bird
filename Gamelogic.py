@@ -5,9 +5,8 @@ import random
 import pygame
 import Gamerendering
 
-
 class Player:
-    def __init__(self, ypos, human=True, agent=False, rendering=False):
+    def __init__(self, ypos, human=True, agent_type="Human", agent=False, rendering=False):
         self.x_pos = 50
         self.y_pos = ypos
         self.x_vel = 0
@@ -16,6 +15,7 @@ class Player:
         self.angle = 0
         self.alive = True
         self.human = human
+        self.agent_type = agent_type
         self.agent = agent
         self.time_since_jumped = 100
 
@@ -25,22 +25,30 @@ class Player:
         self.start_y = ypos
 
     def reset(self):
-        self.__init__(self.start_y, human=self.human)
+        self.__init__(self.start_y, human=self.human, agent_type=self.agent_type, agent=self.agent,
+                      rendering=self.rendering)
 
     def move(self, environment, velocity):
         if self.time_since_jumped < 10:
             self.time_since_jumped += 1
             return 0
-        env = [environment[0], environment[1]]  # , environment[2], environment[3]]
-        # env = []
+        # This is a human player
         if self.human:
             if keyboard.is_pressed('w'):
                 self.y_vel = 7
+        # This is an agent
         else:
-            env.append((self.y_pos - 135) / 525)
-            env.append(self.y_vel / 20)
-            if self.agent.action(env) == 1:
-                self.y_vel = 7
+            if self.agent_type == "NEAT":
+                env = [environment[0], environment[1]]
+                env.append((self.y_pos - 135) / 525)
+                env.append(self.y_vel / 20)
+                if self.agent.action(env) == 1:
+                    self.y_vel = 7
+            elif self.agent_type == "DQN":
+                action = self.agent.act_store(environment[-1], environment[-2], not self.alive)
+                if action == 1:
+                    self.y_vel = 7
+
         self.angle = math.atan(self.y_vel / velocity) * 180 / 3.14159265358979 / 2
         if self.y_vel == 7:
             self.time_since_jumped = 0
@@ -119,8 +127,8 @@ class Gamelogic:
             for pipe in self.pipes:
                 self.render.add_pipe(pipe)
 
-    def add_player(self, human=True, player=False, position=350, render=False):
-        wrapper_player = Player(position, human=human, agent=player, rendering=render)
+    def add_player(self, human=True, agent_type="Human", player=False, position=350, render=False):
+        wrapper_player = Player(position, human=human, agent_type=agent_type, agent=player, rendering=render)
         self.players.append(wrapper_player)
         if render:
             self.render.add_player(wrapper_player)
@@ -139,21 +147,22 @@ class Gamelogic:
 
     # Choose to render or not and at what speed
     def user_input(self, can_open_window=False):
-        # Render
-        if keyboard.is_pressed('r'):
-            self.rendering = True
-        # Simulate
-        elif keyboard.is_pressed('s'):
-            self.rendering = False
-        # Set speed
-        for x in range(1, 10):
-            if keyboard.is_pressed(str(x)):
-                self.render_speed = x
-                return
-        if keyboard.is_pressed('ctrl'):
-            self.open_new_window = True
+        # # Render
+        # if keyboard.is_pressed('r'):
+        #     self.rendering = True
+        # # Simulate
+        # elif keyboard.is_pressed('s'):
+        #     self.rendering = False
+        # # Set speed
+        # for x in range(1, 10):
+        #     if keyboard.is_pressed(str(x)):
+        #         self.render_speed = x
+        #         return
+        # if keyboard.is_pressed('ctrl'):
+        #     self.open_new_window = True
+        pass
 
-    def run_game(self, to_render, generation):
+    def run_game(self, to_render, generation, return_image=False):
         # Initializing the variables
         action_time = 0
         action_calculate_time = 0
@@ -174,6 +183,7 @@ class Gamelogic:
                 if player.rendering:
                     self.render.add_player(player)
         while True:
+            passed_pipe_now = False
             self.user_input()
 
             current_fitness += 1
@@ -195,6 +205,7 @@ class Gamelogic:
             for pipe in self.pipes:
                 if pipe.move(self.velocity):
                     pipes_passed += 1
+                    passed_pipe_now = True
                     if pipes_passed > 1000:
                         print("finished")
                         return
@@ -233,8 +244,11 @@ class Gamelogic:
             # Render the player
             now = time.time()
             if self.rendering and current_fitness % self.render_speed == 0:
-                self.render.draw(pipes_passed, current_fitness, players_alive, self.velocity * self.render_speed,
-                                 generation)
+                # Appending image to environment and rendering image
+                env.append(0.1)
+                env.append(
+                    self.render.draw(pipes_passed, current_fitness, players_alive, self.velocity * self.render_speed,
+                                     generation, return_image=return_image))
             render_time += time.time() - now
 
             # Next move for players
@@ -254,7 +268,6 @@ class Gamelogic:
                       "\tstatus: ", status_time, )
                 print("Pipes passed: " + str(pipes_passed))
                 return
-
 
 # game = Gamelogic(True, rendering=True)
 # game.add_player(position=400, render=True)

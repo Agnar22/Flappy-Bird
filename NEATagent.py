@@ -19,7 +19,7 @@ posVector = []  # x-coordinates
 plt.ion()
 figure = plt.figure()
 
-find_action_time=0
+find_action_time = 0
 
 
 class Neuron:
@@ -76,7 +76,7 @@ class Agent:
         self.min_weight = -2
         self.bias = False
 
-        self.agent_num=agent_num
+        self.agent_num = agent_num
 
         self.fitness = -25
         self.connections = []
@@ -282,7 +282,7 @@ class Agent:
     # Execute action
     def action(self, input):
         global find_action_time
-        now=time.time()
+        now = time.time()
         self.fitness += 1
 
         # Giving the input to the input-neurons
@@ -296,7 +296,7 @@ class Agent:
             value = self.neural_network[x].feed_forward()
             if value != "null":
                 output.append(value)
-        find_action_time+=time.time()-now
+        find_action_time += time.time() - now
         return output.index(max(output))
 
 
@@ -315,17 +315,17 @@ class Population:
         self.population_number = number
         self.global_neuron_mutation_dict = {}  # from-to:GlobalNeuronMutation
         self.global_connection_dict = {}  # from-to:innovation_number
-        self.global_agent_num=0
+        self.global_agent_num = 0
 
         self.agents = [Agent([4, 2], self.global_neuron_mutation_dict, self.global_connection_dict, x) for x in
                        range(number)]
 
-        self.global_agent_num=number
+        self.global_agent_num = number
 
     # Evaluate generation and breed a new
     def generation(self, gamelogic_inp):
         global find_action_time
-        find_action_time=0
+        find_action_time = 0
         self.generation_num += 1
         to_render = (self.last_run > 5000)
         game = gamelogic_inp  # to_render
@@ -355,7 +355,7 @@ class Population:
 
         dist = 0
         for player in self.agents:
-            game.add_player(human=False, player=player, render=dist < 10)
+            game.add_player(human=False, agent_type="NEAT", player=player, render=dist < 10)
             dist += 1
 
         # Fitness
@@ -383,7 +383,7 @@ class Population:
         relative_fitness = []
         for x in range(len(groups)):
             groups[x].sort(key=lambda a: a.fitness, reverse=True)
-            groups[x] = groups[x][:int(math.floor(len(groups[x])*(100-kill_precentage)/100))]
+            groups[x] = groups[x][:int(math.floor(len(groups[x]) * (100 - kill_precentage) / 100))]
             relative_fitness.append(sum(temp_organism.fitness for temp_organism in groups[x]) / max(len(groups[x]), 1))
         print("groups:", len(groups))
 
@@ -451,8 +451,9 @@ class Population:
 
     # Making a new agent by combining two agents
     def breed(self, agent_a, agent_b):
-        new_agent = Agent([4, 2], self.global_neuron_mutation_dict, self.global_connection_dict, self.global_agent_num, add_connections=False)
-        self.global_agent_num+=1
+        new_agent = Agent([4, 2], self.global_neuron_mutation_dict, self.global_connection_dict, self.global_agent_num,
+                          add_connections=False)
+        self.global_agent_num += 1
         first_more_fit = agent_a.fitness > agent_b.fitness
         pos_a = 0
         pos_b = 0
