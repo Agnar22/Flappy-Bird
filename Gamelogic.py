@@ -5,6 +5,7 @@ import random
 import pygame
 import Gamerendering
 
+
 class Player:
     def __init__(self, ypos, human=True, agent_type="Human", agent=False, rendering=False):
         self.x_pos = 50
@@ -223,7 +224,7 @@ class Gamelogic:
             for player in self.players:
                 # Player is alive and died
                 if player.alive and \
-                        (self.pipes[0].colliding(
+                            (len(self.pipes) > 0 and self.pipes[0].colliding(
                             player) or player.y_pos + player.radius > 672 or player.y_pos - player.radius < 135):
                     player.alive = False
                     players_alive -= 1
@@ -267,7 +268,7 @@ class Gamelogic:
                       "\tplayer_move: ", move_players_time, "\tpipe_move: ", move_pipes_time,
                       "\tstatus: ", status_time, )
                 print("Pipes passed: " + str(pipes_passed))
-                return
+                return current_fitness
 
 # game = Gamelogic(True, rendering=True)
 # game.add_player(position=400, render=True)

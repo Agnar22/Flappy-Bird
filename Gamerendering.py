@@ -40,6 +40,7 @@ class Gamerendering:
             arcade.sprite.Sprite("Images/bird_yellow.png", 0.2, center_x=player.x_pos, center_y=player.y_pos))
 
     def _get_image(self):
+        print(self.black_background)
         self.black_background.draw()
         self._draw_pipes()
         self._draw_players()
