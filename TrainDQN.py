@@ -5,8 +5,7 @@ import cv2
 
 
 class Data:
-    def __init__(self, size, memory_size=2048):
-        self.size = size
+    def __init__(self, memory_size=2048):
         self.states = None
         self.rewards = np.array([])
         self.actions = np.array([])
@@ -41,20 +40,26 @@ class Data:
     def get_random_data(self, number):
         chosen = np.random.choice(np.arange(self.actions.shape[0]), size=number, replace=True,
                                   p=self.probs / self.probs.sum())
-        next = (chosen + 1) % self.max_memory
-        return np.take(self.states, chosen), np.take(self.actions, chosen), np.take(self.rewards, chosen), np.take(
-            self.finished_episodes, chosen), np.take(self.states, next)
+        next = (chosen + 1) % min(self.max_memory, self.actions.shape[0])
+        return np.take(self.states, chosen), np.take(self.actions, chosen), np.take(self.rewards, chosen), \
+               np.take(self.states, next), np.take(
+            self.finished_episodes, chosen)
+
+    def update_priority(self, num, pri):
+        self.probs[num] = pri ** self.alpha
 
 
 class DQNWrapper:
-    def __init__(self, agent):
+    def __init__(self, agent, data_obj):
         self.default_priority = 0.0001
 
+        self.data_obj = data_obj
         self.agent = agent
+
+    def _init_lists(self):
         self.states = []
         self.actions = []
         self.rewards = []
-        self.priorities = []
         self.finished_episodes = []
 
     @staticmethod
@@ -73,13 +78,18 @@ class DQNWrapper:
         self.states.append(prep_state)
         action = agent.act(prep_state)
         self.actions.append(action)
+        return action
 
     def add_rewards(self, reward, finished):
         self.rewards.append(reward)
         self.finished_episodes.append(finished)
 
+    # Calculating priorities and stores the sequences in data
     def store_and_reset(self):
-        pass
+        for i in range(len(self.states)):
+            self.data_obj.add_element(self.states[i], self.priorities[i],
+                                      self.actions[i], self.finished_episodes[i], 1)
+        self._init_lists()
 
 
 action_size = 2
@@ -87,6 +97,8 @@ batch_size = 32
 n_episodes = 5000
 
 agent = DQN.DQNAgent(action_size)
+data_store = Data()
+agent_wrapper=DQNWrapper(agent)
 # agent.load('model_200.h5')
 game = Gamelogic.Gamelogic(new_window=True, rendering=True)
 max_fitness = 0

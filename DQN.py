@@ -85,6 +85,9 @@ class DQNAgent:
         self._store(state, action, reward, done)
         return action
 
+    def predict(self, state):
+        return self.TargetNetwork.predict(state)
+
     def act(self, state, pre_process=False):
         if pre_process:
             state = self.pre_process(state)
@@ -93,8 +96,8 @@ class DQNAgent:
         act_values = self.TargetNetwork.predict(state)
         return np.argmax(act_values[0])
 
-    def replay(self, batch_size):
-        minibatch = random.sample(self.memory, batch_size)
+    def replay(self, batch_size, minibatch):
+        # minibatch = random.sample(self.memory, batch_size)
 
         for state, action, reward, next_state, done in minibatch:
 
@@ -115,7 +118,7 @@ class DQNAgent:
             target_f = self.DQNetwork.predict(state)
             target_f[0][action] = target
 
-            self.DQNetwork.fit(state, target_f, epochs=1, verbose=0)
+            train_history = self.DQNetwork.fit(state, target_f, epochs=1, verbose=0)
 
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
