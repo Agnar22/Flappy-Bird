@@ -148,20 +148,20 @@ class Gamelogic:
 
     # Choose to render or not and at what speed
     def user_input(self, can_open_window=False):
-        # # Render
-        # if keyboard.is_pressed('r'):
-        #     self.rendering = True
-        # # Simulate
-        # elif keyboard.is_pressed('s'):
-        #     self.rendering = False
-        # # Set speed
-        # for x in range(1, 10):
-        #     if keyboard.is_pressed(str(x)):
-        #         self.render_speed = x
-        #         return
-        # if keyboard.is_pressed('ctrl'):
-        #     self.open_new_window = True
-        pass
+        # Render
+        if keyboard.is_pressed('r'):
+            self.rendering = True
+        # Simulate
+        elif keyboard.is_pressed('s'):
+            self.rendering = False
+        # Set speed
+        for x in range(1, 10):
+            if keyboard.is_pressed(str(x)):
+                self.render_speed = x
+                return
+        if keyboard.is_pressed('ctrl'):
+            self.open_new_window = True
+        # pass
 
     def run_game(self, to_render, generation, return_image=False):
         # Initializing the variables
